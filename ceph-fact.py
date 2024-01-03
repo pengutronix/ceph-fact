@@ -234,47 +234,14 @@ def collect_ceph_information(r, ceph_config, timeout,
         if not data:
           return data
 
-        if mode == 'plain':
-            if type(data) == bytes:
-                data=data.decode('utf-8')
-
-            lines=data.splitlines()
-            if not is_conffile:
-                # find the position of the VALUE Column
-                config_value_start=lines[0].rfind("VALUE")
-                config_value_end=lines[0].rfind("RO")
-
-            for patter in config_filters:
-                for index in range(len(lines)-1, 0, -1):
-                    line=lines[index]
-                    if bool(re.search(patter, line)):
-                        if is_conffile:
-                            # replace from '=' to end of line with FILTER_PLACEHOLDER 
-                            lines[index] = line[:line.rfind("=")] + ' = ' + FILTER_PLACEHOLDER 
-                        else:
-                            # replace the VALUE column with FILTER_PLACEHOLDER
-                            lines[index] = line[:config_value_start] +  \
-                                FILTER_PLACEHOLDER + " " + \
-                                line[config_value_end]
-            data='\n'.join(lines)
-
-        elif mode in ('json', 'json-pretty'):
-            js= json.loads(data)
-            for patter in config_filters:
-                for index in range(len(js)-1, -1, -1):
-                    for key in ('name', 'section', 'value'):
-                        if bool(re.search(patter, js[index][key])):
-                            js[index]['value']=FILTER_PLACEHOLDER
-                            break
-            if mode == 'json':
-                data = json.dumps(js)
-            else:
-                data = json.dumps(js, sort_keys=True, indent=4)   
-        else:    
-            log.error("Unsupported output mode")
-            sys.exit(1) 
-
-        return data.encode('utf-8')
+        js= json.loads(data)
+        for patter in config_filters:
+            for index in range(len(js)-1, -1, -1):
+                for key in ('name', 'section', 'value'):
+                    if bool(re.search(patter, js[index][key])):
+                        js[index]['value']=FILTER_PLACEHOLDER
+                        break
+        return js
 
     data = dict()
 
