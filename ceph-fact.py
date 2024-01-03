@@ -85,7 +85,7 @@ def spawn(command, shell=True):
     return result.strip()
 
 
-def ceph_mon_command(r, command, timeout, output_format, **kwargs):
+def ceph_mon_command(r, command, timeout, **kwargs):
     """
     Using librados directly execute a command inside the Monitors.
 
@@ -99,8 +99,6 @@ def ceph_mon_command(r, command, timeout, output_format, **kwargs):
         :param timeout:
             The timeout for the request
         :type  timeout: ``int``
-        :param output_format:
-        :type output_format: ``str``
 
         :param \**kwargs:
             the arguments to pass to the mon command
@@ -112,7 +110,7 @@ def ceph_mon_command(r, command, timeout, output_format, **kwargs):
 
     cmd = kwargs.copy()
     cmd['prefix'] = command
-    cmd['format'] = output_format
+    cmd['format'] = 'json'
     _, buf, _ = r.mon_command(json.dumps(cmd), b'', timeout=timeout)
     return buf
 
@@ -212,18 +210,13 @@ def collect_ceph_information(r, ceph_config, timeout,
     config_filters=DEFAULT_CONFIG_FILTERS
     config_filters.extend(custom_config_filters) 
     
-    def filter_config(data, mode, is_conffile):
+    def filter_config(js, is_conffile):
         """
         It purges the configuration
         Args:
             :param data:
                 configuraration data
             :type data: ``str``
-            :param mode:
-                mode can be:
-                    * 'plain' 
-                    * 'json'   
-            :type mode: ``str``
             :param is_conffile:
                 True if data is from "ceph.conf"
             :type is_conffile: ``bool``
