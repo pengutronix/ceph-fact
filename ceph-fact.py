@@ -34,7 +34,7 @@ DEFAULT_CONFIG_FILTERS = [
 FILTER_PLACEHOLDER = "** HIDDEN **"
 
 # Logging configuration
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 
 log = logging.getLogger()
 
