@@ -35,16 +35,16 @@ FILTER_PLACEHOLDER = "** HIDDEN **"
 # Logging configuration
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-LOGGER = logging.getLogger()
+log = logging.getLogger()
 
 try:
     import rados
 except ImportError:
     if sys.version_info[0] == 3:
-        LOGGER.error("rados module not found, try running with python2")
+        log.error("rados module not found, try running with python2")
         sys.exit(1)
     else:
-        LOGGER.error("rados module not found, try running with python3")
+        log.error("rados module not found, try running with python3")
         sys.exit(1)
 
 # Functions to gather Ceph information
@@ -75,13 +75,13 @@ def get_rados_connection(ceph_config, timeout):
     :param timeout: Seconds for timeouts on Ceph operations
     :return: Rados connection
     """
-    LOGGER.debug('Using Ceph configuration file: %s', ceph_config)
+    log.debug('Using Ceph configuration file: %s', ceph_config)
     r = rados.Rados(conffile=ceph_config)
 
-    LOGGER.debug('Setting client_mount_timeout to: %d', timeout)
+    log.debug('Setting client_mount_timeout to: %d', timeout)
     r.conf_set('client_mount_timeout', str(timeout))
 
-    LOGGER.debug('Connecting to Ceph cluster')
+    log.debug('Connecting to Ceph cluster')
     r.connect(timeout=timeout)
 
     return r
@@ -165,13 +165,13 @@ def get_mds_info(r, timeout, output_format):
     info['dump'] = ceph_mon_command(r, 'mds dump', timeout, output_format)
     if not info['dump']:
         # New ceph version
-        LOGGER.debug("Gathering MDS: Luminous or newer version")
+        log.debug("Gathering MDS: Luminous or newer version")
         info['dump'] = ceph_mon_command(r, 'fs dump', timeout, output_format)
         # The standard output format is colorized, force to 'json-pretty'
         info['status'] = ceph_mon_command(r, 'fs status', timeout, 'json-pretty')
     else:
         # Old ceph version
-        LOGGER.debug("Gathering MDS: Mimic or previous version")
+        log.debug("Gathering MDS: Mimic or previous version")
         info['stat'] = ceph_mon_command(r, 'mds stat', timeout, output_format)
         info['map'] = ceph_mon_command(r, 'mds getmap', timeout, output_format)
     return info
@@ -207,7 +207,7 @@ def get_device_info(r, timeout, output_format):
                     device['metrics'][key] = metrics[key]
         info['status'] = json.dumps(device_list, sort_keys=True, indent=4).encode('utf-8')
     else:
-        LOGGER.info('Device health info is enabled, but it seems not supported by this ceph version')
+        log.info('Device health info is enabled, but it seems not supported by this ceph version')
         info['status'] = b''
     return info
 
@@ -282,25 +282,25 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
             else:
                 data = json.dumps(js, sort_keys=True, indent=4)   
         else:    
-            LOGGER.error("Unsupported output mode")
+            log.error("Unsupported output mode")
             sys.exit(1) 
 
         return data.encode('utf-8')
 
     tmpdir = tempfile.mkdtemp()
 
-    LOGGER.debug('Using temporary directory %s', tmpdir)
+    log.debug('Using temporary directory %s', tmpdir)
 
     files = dict()
 
-    LOGGER.info('Gathering overall system information')
+    log.info('Gathering overall system information')
     files['uname'] = spawn('uname -a') + b'\n'
     lsb_release = spawn('lsb_release -a')
     if(len(lsb_release)==0):
         lsb_release = spawn('cat /etc/*-release')
     files['lsb_release'] = lsb_release + b'\n'
 
-    LOGGER.info('Gathering overall Ceph information')
+    log.info('Gathering overall Ceph information')
     files['status'] = ceph_mon_command(r, 'status', timeout, 'plain')
     files['status.json'] = ceph_mon_command(r, 'status', timeout, 'json')
     files['version'] = spawn('ceph -v') + b'\n'
@@ -337,34 +337,34 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
         False
     )
     if log_config: 
-        LOGGER.info('==== ceph.conf ======')
+        log.info('==== ceph.conf ======')
         for line in files['ceph.conf'] .splitlines():
             writemessage = " - " + line.decode('utf-8') 
-            LOGGER.info(str(writemessage))
-        LOGGER.info('====== config ======')
+            log.info(str(writemessage))
+        log.info('====== config ======')
         for line in files['config'] .splitlines():
             writemessage = " - " + line.decode('utf-8')
-            LOGGER.info(str(writemessage))
+            log.info(str(writemessage))
 
-    LOGGER.info('Gathering Health information')
+    log.info('Gathering Health information')
     for key, item in get_health_info(r, timeout, 'plain').items():
         files['health_{0}'.format(key)] = item
     for key, item in get_health_info(r, timeout, 'json').items():
         files['health_{0}.json'.format(key)] = item
 
-    LOGGER.info('Gathering MON information')
+    log.info('Gathering MON information')
     for key, item in get_mon_info(r, timeout, 'plain').items():
         files['mon_{0}'.format(key)] = item
     for key, item in get_mon_info(r, timeout, 'json').items():
         files['mon_{0}.json'.format(key)] = item
 
-    LOGGER.info('Gathering OSD information')
+    log.info('Gathering OSD information')
     for key, item in get_osd_info(r, timeout, 'plain').items():
         files['osd_{0}'.format(key)] = item
     for key, item in get_osd_info(r, timeout, 'json').items():
         files['osd_{0}.json'.format(key)] = item
 
-    LOGGER.info('Gathering PG information')
+    log.info('Gathering PG information')
     for key, item in get_pg_stat_info(r, timeout, 'plain').items():
         files['pg_{0}'.format(key)] = item
     for key, item in get_pg_stat_info(r, timeout, 'json').items():
@@ -373,14 +373,14 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
         files['pg_{0}'.format(key)] = item
     # pg dump json is too big so we collect only plain
 
-    LOGGER.info('Gathering MDS information')
+    log.info('Gathering MDS information')
     for key, item in get_mds_info(r, timeout, 'plain').items():
         files['mds_{0}'.format(key)] = item
     for key, item in get_mds_info(r, timeout, 'json').items():
         files['mds_{0}.json'.format(key)] = item
 
     if device_health:
-        LOGGER.info('Gathering Device Health information')
+        log.info('Gathering Device Health information')
         for key, item in get_device_info(r, timeout, 'plain').items():
             files['device_{0}'.format(key)] = item
         for key, item in get_device_info(r, timeout, 'json').items():
@@ -392,7 +392,7 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
     with tarfile.open(tarball, 'w:gz') as tar:
         for filename, content in files.items():
             tmpfile = '{0}/{1}'.format(tmpdir, filename)
-            LOGGER.debug('Writing file %s', tmpfile)
+            log.debug('Writing file %s', tmpfile)
             #write_file(tmpfile, bytes(content, 'utf-8'))
             write_file(tmpfile, content)
             tar.add(name=tmpfile,
@@ -400,13 +400,13 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
 
     tar.close()
 
-    LOGGER.info('Outputted Ceph information to %s', tarball)
+    log.info('Outputted Ceph information to %s', tarball)
 
     if cleanup:
-        LOGGER.debug('Cleaning up temporary directory %s', tmpdir)
+        log.debug('Cleaning up temporary directory %s', tmpdir)
         shutil.rmtree(tmpdir)
     else:
-        LOGGER.debug('Not cleaning up temporary directory %s', tmpdir)
+        log.debug('Not cleaning up temporary directory %s', tmpdir)
 
 
 if __name__ == '__main__':
@@ -441,7 +441,7 @@ if __name__ == '__main__':
     ARGS = PARSER.parse_args()
 
     if ARGS.debug:
-        LOGGER.setLevel(logging.DEBUG)
+        log.setLevel(logging.DEBUG)
 
     try:
         CNX = get_rados_connection(ceph_config=ARGS.ceph_config,
@@ -458,6 +458,6 @@ if __name__ == '__main__':
             IOError,
             KeyError,
             ValueError) as exc:
-        LOGGER.error(exc)
+        log.error(exc)
 
     sys.exit(RETURN_VALUE)
