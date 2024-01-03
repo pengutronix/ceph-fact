@@ -317,5 +317,6 @@ if __name__ == '__main__':
             KeyError,
             ValueError) as exc:
         log.error(exc)
+        # FIXME: output ceph fact json error - ansible fails if facts are failing
 
     sys.exit(RETURN_VALUE)
