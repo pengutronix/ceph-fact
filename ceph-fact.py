@@ -112,7 +112,7 @@ def ceph_mon_command(r, command, timeout, **kwargs):
     cmd['prefix'] = command
     cmd['format'] = 'json'
     _, buf, _ = r.mon_command(json.dumps(cmd), b'', timeout=timeout)
-    return buf
+    return json.loads(buf.decode('utf-8'))
 
 
 def get_health_info(r, timeout, output_format):
