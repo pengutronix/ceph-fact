@@ -283,28 +283,7 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
     data['versions.json'] = ceph_mon_command(r, 'versions', timeout, 'json')
     data['features.json'] = ceph_mon_command(r, 'features', timeout, 'json')
 
-    ##Add if to get around python2/python3 dependencies etc.
-    if sys.version_info[0] == 3:
-        data['fsid'] = bytes(r.get_fsid() + '\n', 'utf-8')
-        data['ceph.conf'] = filter_config(
-                get_ceph_config(ceph_config), 
-                'plain',
-                True
-        )
-    else:
-        data['fsid'] = str(r.get_fsid()) + '\n'
-        data['ceph.conf'] = str(
-            filter_config(
-                get_ceph_config(ceph_config), 
-                'plain',
-                True
-            )
-        )
-    data['config'] = filter_config(
-        ceph_mon_command(r, 'config dump', timeout, 'plain'),
-        'plain',
-        False
-    )
+    data['fsid'] = bytes(r.get_fsid() + '\n', 'utf-8')
     data['config.json'] = filter_config(
         ceph_mon_command(r, 'config dump', timeout, 'json'),
         'json',
