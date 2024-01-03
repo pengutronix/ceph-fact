@@ -278,13 +278,6 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
 
     data = dict()
 
-    log.info('Gathering overall system information')
-    data['uname'] = spawn('uname -a') + b'\n'
-    lsb_release = spawn('lsb_release -a')
-    if(len(lsb_release)==0):
-        lsb_release = spawn('cat /etc/*-release')
-    data['lsb_release'] = lsb_release + b'\n'
-
     log.info('Gathering overall Ceph information')
     data['status'] = ceph_mon_command(r, 'status', timeout, 'plain')
     data['status.json'] = ceph_mon_command(r, 'status', timeout, 'json')
