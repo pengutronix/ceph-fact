@@ -224,10 +224,8 @@ def collect_ceph_information(r, ceph_config, timeout,
             bytes
         
         """
-        if not data:
-          return data
-
-        js= json.loads(data)
+        if not js:
+          return js
         for patter in config_filters:
             for index in range(len(js)-1, -1, -1):
                 for key in ('name', 'section', 'value'):
