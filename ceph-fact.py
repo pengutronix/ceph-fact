@@ -205,7 +205,7 @@ def get_ceph_config(ceph_config):
     return read_file(ceph_config)
 
 
-def collect_ceph_information(r, ceph_config, output_directory, timeout,
+def collect_ceph_information(r, ceph_config, timeout,
                             cleanup=True, device_health=False,
                             custom_config_filters=[],log_config=False):
     
@@ -325,9 +325,6 @@ if __name__ == '__main__':
     PARSER.add_argument('--ceph-config', action='store', dest='ceph_config',
                         default=CEPH_CONFIG_FILE,
                         help='Ceph Configuration file')
-    PARSER.add_argument('--output-dir', action='store', dest='output_dir',
-                        default=tempfile.gettempdir(),
-                        help='Directory to store output in')
     PARSER.add_argument('--timeout', action='store', type=int,
                         dest='timeout',
                         default=CEPH_TIMEOUT,
@@ -355,7 +352,6 @@ if __name__ == '__main__':
         CNX = get_rados_connection(ceph_config=ARGS.ceph_config,
                                    timeout=ARGS.timeout)
         data = collect_ceph_information(r=CNX, ceph_config=ARGS.ceph_config,
-                                 output_directory=ARGS.output_dir,
                                  timeout=ARGS.timeout, cleanup=ARGS.cleanup,
                                  device_health=ARGS.device_health_metrics,
                                  custom_config_filters=ARGS.custom_config_filter or [],
