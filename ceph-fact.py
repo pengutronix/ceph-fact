@@ -128,7 +128,8 @@ def get_mon_info(r, timeout):
     info = dict()
     info['stat'] = ceph_mon_command(r, 'mon stat', timeout)
     info['dump'] = ceph_mon_command(r, 'mon dump', timeout)
-    info['map'] = ceph_mon_command(r, 'mon getmap', timeout)
+    # returns binary data
+    #info['map'] = ceph_mon_command(r, 'mon getmap', timeout)
     info['metadata'] = ceph_mon_command(r, 'mon metadata', timeout)
     return info
 
@@ -139,28 +140,23 @@ def get_osd_info(r, timeout):
     info['df'] = ceph_mon_command(r, 'osd df', timeout)
     info['dump'] = ceph_mon_command(r, 'osd dump', timeout)
     info['stat'] = ceph_mon_command(r, 'osd stat', timeout)
-    info['crushmap'] = ceph_mon_command(r, 'osd getcrushmap', timeout)
-    info['map'] = ceph_mon_command(r, 'osd getmap', timeout)
+    # returns binary data
+    #info['crushmap'] = ceph_mon_command(r, 'osd getcrushmap', timeout)
+    #info['map'] = ceph_mon_command(r, 'osd getmap', timeout)
     info['metadata'] = ceph_mon_command(r, 'osd metadata', timeout)
-    info['perf'] = ceph_mon_command(r, 'osd perf', timeout)
+    # gathering performance data is expensive
+    #info['perf'] = ceph_mon_command(r, 'osd perf', timeout)
     return info
 
 
 def get_mds_info(r, timeout):
     info = dict()
     info['metadata'] = ceph_mon_command(r, 'mds metadata', timeout)
-    info['dump'] = ceph_mon_command(r, 'mds dump', timeout)
-    if not info['dump']:
-        # New ceph version
-        log.debug("Gathering MDS: Luminous or newer version")
-        info['dump'] = ceph_mon_command(r, 'fs dump', timeout)
-        # The standard output format is colorized, force to 'json-pretty'
-        info['status'] = ceph_mon_command(r, 'fs status', timeout)
-    else:
-        # Old ceph version
-        log.debug("Gathering MDS: Mimic or previous version")
-        info['stat'] = ceph_mon_command(r, 'mds stat', timeout)
-        info['map'] = ceph_mon_command(r, 'mds getmap', timeout)
+    # New ceph version
+    log.debug("Gathering MDS: Luminous or newer version")
+    info['dump'] = ceph_mon_command(r, 'fs dump', timeout)
+    # The standard output format is colorized, force to 'json-pretty'
+    info['status'] = ceph_mon_command(r, 'fs status', timeout)
     return info
 
 
