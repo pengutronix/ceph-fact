@@ -279,12 +279,8 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
     data = dict()
 
     log.info('Gathering overall Ceph information')
-    data['status'] = ceph_mon_command(r, 'status', timeout, 'plain')
     data['status.json'] = ceph_mon_command(r, 'status', timeout, 'json')
-    data['version'] = spawn('ceph -v') + b'\n'
-    data['versions'] = ceph_mon_command(r, 'versions', timeout, 'plain')
     data['versions.json'] = ceph_mon_command(r, 'versions', timeout, 'json')
-    data['features'] = ceph_mon_command(r, 'features', timeout, 'plain')
     data['features.json'] = ceph_mon_command(r, 'features', timeout, 'json')
 
     ##Add if to get around python2/python3 dependencies etc.
@@ -314,53 +310,29 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
         'json',
         False
     )
-    if log_config: 
-        log.info('==== ceph.conf ======')
-        for line in data['ceph.conf'] .splitlines():
-            writemessage = " - " + line.decode('utf-8') 
-            log.info(str(writemessage))
-        log.info('====== config ======')
-        for line in data['config'] .splitlines():
-            writemessage = " - " + line.decode('utf-8')
-            log.info(str(writemessage))
 
     log.info('Gathering Health information')
-    for key, item in get_health_info(r, timeout, 'plain').items():
-        data['health_{0}'.format(key)] = item
     for key, item in get_health_info(r, timeout, 'json').items():
         data['health_{0}.json'.format(key)] = item
 
     log.info('Gathering MON information')
-    for key, item in get_mon_info(r, timeout, 'plain').items():
-        data['mon_{0}'.format(key)] = item
     for key, item in get_mon_info(r, timeout, 'json').items():
         data['mon_{0}.json'.format(key)] = item
 
     log.info('Gathering OSD information')
-    for key, item in get_osd_info(r, timeout, 'plain').items():
-        data['osd_{0}'.format(key)] = item
     for key, item in get_osd_info(r, timeout, 'json').items():
         data['osd_{0}.json'.format(key)] = item
 
     log.info('Gathering PG information')
-    for key, item in get_pg_stat_info(r, timeout, 'plain').items():
-        data['pg_{0}'.format(key)] = item
     for key, item in get_pg_stat_info(r, timeout, 'json').items():
         data['pg_{0}.json'.format(key)] = item
-    for key, item in get_pg_dump_info(r, timeout, 'plain').items():
-        data['pg_{0}'.format(key)] = item
-    # pg dump json is too big so we collect only plain
 
     log.info('Gathering MDS information')
-    for key, item in get_mds_info(r, timeout, 'plain').items():
-        data['mds_{0}'.format(key)] = item
     for key, item in get_mds_info(r, timeout, 'json').items():
         data['mds_{0}.json'.format(key)] = item
 
     if device_health:
         log.info('Gathering Device Health information')
-        for key, item in get_device_info(r, timeout, 'plain').items():
-            data['device_{0}'.format(key)] = item
         for key, item in get_device_info(r, timeout, 'json').items():
             data['device_{0}.json'.format(key)] = item
     return data
