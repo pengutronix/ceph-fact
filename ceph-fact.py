@@ -17,7 +17,6 @@ import sys
 import shutil
 import logging
 import tempfile
-import tarfile
 import json
 import subprocess
 
@@ -48,18 +47,6 @@ except ImportError:
     else:
         log.error("rados module not found, try running with python3")
         sys.exit(1)
-
-# Functions to gather Ceph information
-def write_file(filename, content):
-    """
-    :param filename: File to write to
-    :param content: Content to write to file
-    :return: True on succes
-    """
-    with open(filename, 'wb') as file_handle:
-        file_handle.write(content)
-        return True
-
 
 def read_file(filename):
     """
@@ -289,10 +276,6 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
 
         return data.encode('utf-8')
 
-    tmpdir = tempfile.mkdtemp()
-
-    log.debug('Using temporary directory %s', tmpdir)
-
     files = dict()
 
     log.info('Gathering overall system information')
@@ -388,28 +371,6 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
         for key, item in get_device_info(r, timeout, 'json').items():
             files['device_{0}.json'.format(key)] = item
 
-    timestr = datetime.datetime.now().strftime("%Y%m%d_%H%I%S")
-    tarball = '{0}/ceph-collect_{1}.tar.gz'.format(output_directory, timestr)
-
-    with tarfile.open(tarball, 'w:gz') as tar:
-        for filename, content in files.items():
-            tmpfile = '{0}/{1}'.format(tmpdir, filename)
-            log.debug('Writing file %s', tmpfile)
-            #write_file(tmpfile, bytes(content, 'utf-8'))
-            write_file(tmpfile, content)
-            tar.add(name=tmpfile,
-                    arcname='ceph-collect_{0}/{1}'.format(timestr, filename))
-
-    tar.close()
-
-    log.info('Outputted Ceph information to %s', tarball)
-
-    if cleanup:
-        log.debug('Cleaning up temporary directory %s', tmpdir)
-        shutil.rmtree(tmpdir)
-    else:
-        log.debug('Not cleaning up temporary directory %s', tmpdir)
-
 
 if __name__ == '__main__':
     RETURN_VALUE = 1
@@ -456,7 +417,6 @@ if __name__ == '__main__':
                                  log_config=ARGS.log_gathered_config)
         RETURN_VALUE = 0
     except (rados.Error,
-            tarfile.TarError,
             IOError,
             KeyError,
             ValueError) as exc:
