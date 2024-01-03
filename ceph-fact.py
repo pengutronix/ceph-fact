@@ -276,100 +276,101 @@ def collect_ceph_information(r, ceph_config, output_directory, timeout,
 
         return data.encode('utf-8')
 
-    files = dict()
+    data = dict()
 
     log.info('Gathering overall system information')
-    files['uname'] = spawn('uname -a') + b'\n'
+    data['uname'] = spawn('uname -a') + b'\n'
     lsb_release = spawn('lsb_release -a')
     if(len(lsb_release)==0):
         lsb_release = spawn('cat /etc/*-release')
-    files['lsb_release'] = lsb_release + b'\n'
+    data['lsb_release'] = lsb_release + b'\n'
 
     log.info('Gathering overall Ceph information')
-    files['status'] = ceph_mon_command(r, 'status', timeout, 'plain')
-    files['status.json'] = ceph_mon_command(r, 'status', timeout, 'json')
-    files['version'] = spawn('ceph -v') + b'\n'
-    files['versions'] = ceph_mon_command(r, 'versions', timeout, 'plain')
-    files['versions.json'] = ceph_mon_command(r, 'versions', timeout, 'json')
-    files['features'] = ceph_mon_command(r, 'features', timeout, 'plain')
-    files['features.json'] = ceph_mon_command(r, 'features', timeout, 'json')
+    data['status'] = ceph_mon_command(r, 'status', timeout, 'plain')
+    data['status.json'] = ceph_mon_command(r, 'status', timeout, 'json')
+    data['version'] = spawn('ceph -v') + b'\n'
+    data['versions'] = ceph_mon_command(r, 'versions', timeout, 'plain')
+    data['versions.json'] = ceph_mon_command(r, 'versions', timeout, 'json')
+    data['features'] = ceph_mon_command(r, 'features', timeout, 'plain')
+    data['features.json'] = ceph_mon_command(r, 'features', timeout, 'json')
 
     ##Add if to get around python2/python3 dependencies etc.
     if sys.version_info[0] == 3:
-        files['fsid'] = bytes(r.get_fsid() + '\n', 'utf-8')
-        files['ceph.conf'] = filter_config(
+        data['fsid'] = bytes(r.get_fsid() + '\n', 'utf-8')
+        data['ceph.conf'] = filter_config(
                 get_ceph_config(ceph_config), 
                 'plain',
                 True
         )
     else:
-        files['fsid'] = str(r.get_fsid()) + '\n'
-        files['ceph.conf'] = str(
+        data['fsid'] = str(r.get_fsid()) + '\n'
+        data['ceph.conf'] = str(
             filter_config(
                 get_ceph_config(ceph_config), 
                 'plain',
                 True
             )
         )
-    files['config'] = filter_config(
+    data['config'] = filter_config(
         ceph_mon_command(r, 'config dump', timeout, 'plain'),
         'plain',
         False
     )
-    files['config.json'] = filter_config(
+    data['config.json'] = filter_config(
         ceph_mon_command(r, 'config dump', timeout, 'json'),
         'json',
         False
     )
     if log_config: 
         log.info('==== ceph.conf ======')
-        for line in files['ceph.conf'] .splitlines():
+        for line in data['ceph.conf'] .splitlines():
             writemessage = " - " + line.decode('utf-8') 
             log.info(str(writemessage))
         log.info('====== config ======')
-        for line in files['config'] .splitlines():
+        for line in data['config'] .splitlines():
             writemessage = " - " + line.decode('utf-8')
             log.info(str(writemessage))
 
     log.info('Gathering Health information')
     for key, item in get_health_info(r, timeout, 'plain').items():
-        files['health_{0}'.format(key)] = item
+        data['health_{0}'.format(key)] = item
     for key, item in get_health_info(r, timeout, 'json').items():
-        files['health_{0}.json'.format(key)] = item
+        data['health_{0}.json'.format(key)] = item
 
     log.info('Gathering MON information')
     for key, item in get_mon_info(r, timeout, 'plain').items():
-        files['mon_{0}'.format(key)] = item
+        data['mon_{0}'.format(key)] = item
     for key, item in get_mon_info(r, timeout, 'json').items():
-        files['mon_{0}.json'.format(key)] = item
+        data['mon_{0}.json'.format(key)] = item
 
     log.info('Gathering OSD information')
     for key, item in get_osd_info(r, timeout, 'plain').items():
-        files['osd_{0}'.format(key)] = item
+        data['osd_{0}'.format(key)] = item
     for key, item in get_osd_info(r, timeout, 'json').items():
-        files['osd_{0}.json'.format(key)] = item
+        data['osd_{0}.json'.format(key)] = item
 
     log.info('Gathering PG information')
     for key, item in get_pg_stat_info(r, timeout, 'plain').items():
-        files['pg_{0}'.format(key)] = item
+        data['pg_{0}'.format(key)] = item
     for key, item in get_pg_stat_info(r, timeout, 'json').items():
-        files['pg_{0}.json'.format(key)] = item
+        data['pg_{0}.json'.format(key)] = item
     for key, item in get_pg_dump_info(r, timeout, 'plain').items():
-        files['pg_{0}'.format(key)] = item
+        data['pg_{0}'.format(key)] = item
     # pg dump json is too big so we collect only plain
 
     log.info('Gathering MDS information')
     for key, item in get_mds_info(r, timeout, 'plain').items():
-        files['mds_{0}'.format(key)] = item
+        data['mds_{0}'.format(key)] = item
     for key, item in get_mds_info(r, timeout, 'json').items():
-        files['mds_{0}.json'.format(key)] = item
+        data['mds_{0}.json'.format(key)] = item
 
     if device_health:
         log.info('Gathering Device Health information')
         for key, item in get_device_info(r, timeout, 'plain').items():
-            files['device_{0}'.format(key)] = item
+            data['device_{0}'.format(key)] = item
         for key, item in get_device_info(r, timeout, 'json').items():
-            files['device_{0}.json'.format(key)] = item
+            data['device_{0}.json'.format(key)] = item
+    return data
 
 
 if __name__ == '__main__':
@@ -409,12 +410,14 @@ if __name__ == '__main__':
     try:
         CNX = get_rados_connection(ceph_config=ARGS.ceph_config,
                                    timeout=ARGS.timeout)
-        collect_ceph_information(r=CNX, ceph_config=ARGS.ceph_config,
+        data = collect_ceph_information(r=CNX, ceph_config=ARGS.ceph_config,
                                  output_directory=ARGS.output_dir,
                                  timeout=ARGS.timeout, cleanup=ARGS.cleanup,
                                  device_health=ARGS.device_health_metrics,
                                  custom_config_filters=ARGS.custom_config_filter or [],
                                  log_config=ARGS.log_gathered_config)
+        #import pprint; pprint.pprint(data)
+        print(json.dumps({ 'ceph': data }))
         RETURN_VALUE = 0
     except (rados.Error,
             IOError,
