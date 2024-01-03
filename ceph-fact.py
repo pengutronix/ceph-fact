@@ -115,76 +115,76 @@ def ceph_mon_command(r, command, timeout, **kwargs):
     return json.loads(buf.decode('utf-8'))
 
 
-def get_health_info(r, timeout, output_format):
+def get_health_info(r, timeout):
     info = dict()
-    info['stat'] = ceph_mon_command(r, 'health', timeout, output_format)
-    info['df'] = ceph_mon_command(r, 'df', timeout, output_format)
-    info['report'] = ceph_mon_command(r, 'report', timeout, output_format)
-    info['detail'] = ceph_mon_command(r, 'health', timeout, output_format, detail='detail')
+    info['stat'] = ceph_mon_command(r, 'health', timeout)
+    info['df'] = ceph_mon_command(r, 'df', timeout)
+    info['report'] = ceph_mon_command(r, 'report', timeout)
+    info['detail'] = ceph_mon_command(r, 'health', timeout, detail='detail')
     return info
 
 
-def get_mon_info(r, timeout, output_format):
+def get_mon_info(r, timeout):
     info = dict()
-    info['stat'] = ceph_mon_command(r, 'mon stat', timeout, output_format)
-    info['dump'] = ceph_mon_command(r, 'mon dump', timeout, output_format)
-    info['map'] = ceph_mon_command(r, 'mon getmap', timeout, output_format)
-    info['metadata'] = ceph_mon_command(r, 'mon metadata', timeout, output_format)
+    info['stat'] = ceph_mon_command(r, 'mon stat', timeout)
+    info['dump'] = ceph_mon_command(r, 'mon dump', timeout)
+    info['map'] = ceph_mon_command(r, 'mon getmap', timeout)
+    info['metadata'] = ceph_mon_command(r, 'mon metadata', timeout)
     return info
 
 
-def get_osd_info(r, timeout, output_format):
+def get_osd_info(r, timeout):
     info = dict()
-    info['tree'] = ceph_mon_command(r, 'osd tree', timeout, output_format)
-    info['df'] = ceph_mon_command(r, 'osd df', timeout, output_format)
-    info['dump'] = ceph_mon_command(r, 'osd dump', timeout, output_format)
-    info['stat'] = ceph_mon_command(r, 'osd stat', timeout, output_format)
-    info['crushmap'] = ceph_mon_command(r, 'osd getcrushmap', timeout, output_format)
-    info['map'] = ceph_mon_command(r, 'osd getmap', timeout, output_format)
-    info['metadata'] = ceph_mon_command(r, 'osd metadata', timeout, output_format)
-    info['perf'] = ceph_mon_command(r, 'osd perf', timeout, output_format)
+    info['tree'] = ceph_mon_command(r, 'osd tree', timeout)
+    info['df'] = ceph_mon_command(r, 'osd df', timeout)
+    info['dump'] = ceph_mon_command(r, 'osd dump', timeout)
+    info['stat'] = ceph_mon_command(r, 'osd stat', timeout)
+    info['crushmap'] = ceph_mon_command(r, 'osd getcrushmap', timeout)
+    info['map'] = ceph_mon_command(r, 'osd getmap', timeout)
+    info['metadata'] = ceph_mon_command(r, 'osd metadata', timeout)
+    info['perf'] = ceph_mon_command(r, 'osd perf', timeout)
     return info
 
 
-def get_mds_info(r, timeout, output_format):
+def get_mds_info(r, timeout):
     info = dict()
-    info['metadata'] = ceph_mon_command(r, 'mds metadata', timeout, output_format)
-    info['dump'] = ceph_mon_command(r, 'mds dump', timeout, output_format)
+    info['metadata'] = ceph_mon_command(r, 'mds metadata', timeout)
+    info['dump'] = ceph_mon_command(r, 'mds dump', timeout)
     if not info['dump']:
         # New ceph version
         log.debug("Gathering MDS: Luminous or newer version")
-        info['dump'] = ceph_mon_command(r, 'fs dump', timeout, output_format)
+        info['dump'] = ceph_mon_command(r, 'fs dump', timeout)
         # The standard output format is colorized, force to 'json-pretty'
-        info['status'] = ceph_mon_command(r, 'fs status', timeout, 'json-pretty')
+        info['status'] = ceph_mon_command(r, 'fs status', timeout)
     else:
         # Old ceph version
         log.debug("Gathering MDS: Mimic or previous version")
-        info['stat'] = ceph_mon_command(r, 'mds stat', timeout, output_format)
-        info['map'] = ceph_mon_command(r, 'mds getmap', timeout, output_format)
+        info['stat'] = ceph_mon_command(r, 'mds stat', timeout)
+        info['map'] = ceph_mon_command(r, 'mds getmap', timeout)
     return info
 
 
-def get_pg_stat_info(r, timeout, output_format):
+def get_pg_stat_info(r, timeout):
     info = dict()
-    info['stat'] = ceph_mon_command(r, 'pg stat', timeout, output_format)
+    info['stat'] = ceph_mon_command(r, 'pg stat', timeout)
     return info
 
 
-def get_pg_dump_info(r, timeout, output_format):
+def get_pg_dump_info(r, timeout):
     info = dict()
-    info['dump'] = ceph_mon_command(r, 'pg dump', timeout, output_format)
-    info['dump_stuck'] = ceph_mon_command(r, 'pg dump_stuck', timeout, output_format)
+    info['dump'] = ceph_mon_command(r, 'pg dump', timeout)
+    info['dump_stuck'] = ceph_mon_command(r, 'pg dump_stuck', timeout)
     return info
 
 
-def get_device_info(r, timeout, output_format):
+def get_device_info(r, timeout):
     info = dict()
-    info['check_health'] = ceph_mon_command(r, 'device check-health', timeout, output_format)
-    device_list_str = ceph_mon_command(r, 'device ls', timeout, 'json')
+    info['check_health'] = ceph_mon_command(r, 'device check-health', timeout)
+    device_list_str = ceph_mon_command(r, 'device ls', timeout)
     if device_list_str:
         device_list = json.loads(device_list_str)
         for device in device_list:
-            metrics_str =  ceph_mon_command(r, 'device get-health-metrics' , timeout, output_format, devid=device['devid'])
+            metrics_str =  ceph_mon_command(r, 'device get-health-metrics' , timeout, devid=device['devid'])
             device['metrics'] = {}
             if metrics_str:
                 metrics = json.loads(metrics_str)
@@ -237,41 +237,40 @@ def collect_ceph_information(r, ceph_config, timeout,
     data = dict()
 
     log.info('Gathering overall Ceph information')
-    data['status.json'] = ceph_mon_command(r, 'status', timeout, 'json')
-    data['versions.json'] = ceph_mon_command(r, 'versions', timeout, 'json')
-    data['features.json'] = ceph_mon_command(r, 'features', timeout, 'json')
+    data['status'] = ceph_mon_command(r, 'status', timeout)
+    data['versions'] = ceph_mon_command(r, 'versions', timeout)
+    data['features'] = ceph_mon_command(r, 'features', timeout)
 
-    data['fsid'] = bytes(r.get_fsid() + '\n', 'utf-8')
-    data['config.json'] = filter_config(
-        ceph_mon_command(r, 'config dump', timeout, 'json'),
-        'json',
+    data['fsid'] = r.get_fsid()
+    data['config'] = filter_config(
+        ceph_mon_command(r, 'config dump', timeout),
         False
     )
 
     log.info('Gathering Health information')
-    for key, item in get_health_info(r, timeout, 'json').items():
-        data['health_{0}.json'.format(key)] = item
+    for key, item in get_health_info(r, timeout).items():
+        data['health_{0}'.format(key)] = item
 
     log.info('Gathering MON information')
-    for key, item in get_mon_info(r, timeout, 'json').items():
-        data['mon_{0}.json'.format(key)] = item
+    for key, item in get_mon_info(r, timeout).items():
+        data['mon_{0}'.format(key)] = item
 
     log.info('Gathering OSD information')
-    for key, item in get_osd_info(r, timeout, 'json').items():
-        data['osd_{0}.json'.format(key)] = item
+    for key, item in get_osd_info(r, timeout).items():
+        data['osd_{0}'.format(key)] = item
 
     log.info('Gathering PG information')
-    for key, item in get_pg_stat_info(r, timeout, 'json').items():
-        data['pg_{0}.json'.format(key)] = item
+    for key, item in get_pg_stat_info(r, timeout).items():
+        data['pg_{0}'.format(key)] = item
 
     log.info('Gathering MDS information')
-    for key, item in get_mds_info(r, timeout, 'json').items():
-        data['mds_{0}.json'.format(key)] = item
+    for key, item in get_mds_info(r, timeout).items():
+        data['mds_{0}'.format(key)] = item
 
     if device_health:
         log.info('Gathering Device Health information')
-        for key, item in get_device_info(r, timeout, 'json').items():
-            data['device_{0}.json'.format(key)] = item
+        for key, item in get_device_info(r, timeout).items():
+            data['device_{0}'.format(key)] = item
     return data
 
 
