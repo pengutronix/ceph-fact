@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-ceph-collect is a tool used by 42on to gather information from a Ceph cluster
-in case of support or emergency assistance.
 
-The tool gathers information from the Ceph cluster and creates a tarball in /tmp
+ceph-fact is a tool based on 42on ceph-collect to gather information
+from a Ceph cluster for use in ansible fact
+
+The tool gathers information from the Ceph cluster and outputs json
 
 Author: Wido den Hollander <wido@42on.com>
+Author: Björn Lässig <b.laessig@pengutronix.de>
 License: GPL2
 """
 
