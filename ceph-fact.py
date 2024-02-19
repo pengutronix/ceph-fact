@@ -159,6 +159,11 @@ def get_mds_info(r, timeout):
     info['status'] = ceph_mon_command(r, 'fs status', timeout)
     return info
 
+def get_mgr_info(r, timeout):
+    info = dict()
+    info['metadata'] = ceph_mon_command(r, 'mgr metadata', timeout)
+    info['stat'] = ceph_mon_command(r, 'mgr stat', timeout)
+    return info
 
 def get_pg_stat_info(r, timeout):
     info = dict()
@@ -262,6 +267,10 @@ def collect_ceph_information(r, ceph_config, timeout,
     log.info('Gathering MDS information')
     for key, item in get_mds_info(r, timeout).items():
         data['mds_{0}'.format(key)] = item
+
+    log.info('Gathering MGR information')
+    for key, item in get_mgr_info(r, timeout).items():
+        data['mgr_{0}'.format(key)] = item
 
     if device_health:
         log.info('Gathering Device Health information')
