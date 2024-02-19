@@ -241,6 +241,8 @@ def collect_ceph_information(r, ceph_config, timeout,
     data['status'] = ceph_mon_command(r, 'status', timeout)
     data['versions'] = ceph_mon_command(r, 'versions', timeout)
     data['features'] = ceph_mon_command(r, 'features', timeout)
+    data['orch'] = ceph_mon_command(r, 'orch ls', timeout)
+    data['orch_host'] = ceph_mon_command(r, 'orch host ls', timeout)
 
     data['fsid'] = r.get_fsid()
     data['config'] = filter_config(
