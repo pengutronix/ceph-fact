@@ -1,32 +1,13 @@
-# Ceph Collect
-The *ceph-collect* tool is used by [42on](http://www.42on.com/) to gather diagnostic information from a Ceph cluster.
+# Ceph Fact
+The *ceph-fact* tool is an ansible/puppet facter script based on [42on](http://www.42on.com/) to gather diagnostic information from a Ceph cluster.
 
-The output from the tool is used to assist customers in case of questions, support or emergency situations.
-
-The tarball the tool creates contains vital information for our engineers to support our customers.
+The output from the tool is json to assist in writing ansible/puppet for managing your ceph cluster.
 
 This tool does **NOT** collect any user (object) data contents nor authentication credentials from a Ceph cluster.
 
-# Usage
-The first step is to download the tool from [Github](https://github.com/42on/ceph-collect).
-
-You can either clone the Git repository or download just the tool:
-
-## Git clone
-```
-git clone https://github.com/42on/ceph-collect
-cd ceph-collect
-```
-
-## Fetch from Github
-```
-curl -SL -o ceph-collect https://raw.githubusercontent.com/42on/ceph-collect/master/ceph-collect
-chmod +x ceph-collect
-```
-
 ## Requirements
 To run the tool, the following requirements need to be met:
-* Python 2.7 or higher
+* Python 3.5 or higher
 * python-rados, ceph and ceph-common RPM or DEB installed
 * client.admin keyring present in /etc/ceph
 * /etc/ceph/ceph.conf configured to connect to Ceph cluster
@@ -43,60 +24,71 @@ This tool should be run on a machine which is able to connect to the Ceph cluste
 In most of the situations the *monitors* are the right location to run this tool.
 
 ## Running
-When the requirements are met, simply run the *ceph-collect* tool:
-The ceph-collect script is compatible with python versions 2 and 3. Ceph itself is not compatible with both versions.
-
-### Octopus and newer:
-
-``./ceph-collect``
-
-### Nautilus and older:
-
-``python2 ./ceph-collect``
-
-Usually the tool finishes within a few seconds, but if a Ceph cluster is experiencing issues it might take up to 5 minutes.
-
-The output it will print while running:
+When the requirements are met, simply run the *ceph-fact* tool:
 
 
 ```
-root@mon01:~# ./ceph-collect --debug
-DEBUG:root:Using Ceph configuration file: /etc/ceph/ceph.conf
-DEBUG:root:Setting client_mount_timeout to: 10
-DEBUG:root:Connecting to Ceph cluster
-DEBUG:root:Using temporary directory: /tmp/tmpMpFk3n
-INFO:root:Gathering overall Ceph information
-INFO:root:Gathering Health information
-INFO:root:Gathering MON information
-INFO:root:Gathering OSD information
-INFO:root:Gathering PG information
-INFO:root:Gathering MDS information
-INFO:root:Outputted Ceph information to /tmp/ceph-collect_20160729_150304.tar.gz
-DEBUG:root:Cleaning up temporary directory: /tmp/tmpMpFk3n
+root@mon01:~# ./ceph-fact.py
+{
+  "ceph": {
+    "status": {
+      "fsid": "50c175aa-18d2-4182-899a-95a73cafe6da",
+      "health": {
+        "status": "HEALTH_OK",
+        "checks": {},
+        "mutes": []
+      },
+      "election_epoch": 1380,
+      "quorum": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "quorum_names": [
+        "marvin06",
+         ...
 root@mon01:~#
 ```
-### Gathering Device Health information
-By default  ``ceph-collect`` doesn't collect the device's health information. Use ``--device-health-metrics`` to enable it.
 
-``ceph-collect --device-health-metrics``
+# ansible examples
 
-### One-liner
-If you want to run this tool without downloading it, you can run it directly using this one-liner:
+## wait 1000 seconds until cluster is healthy
 
-``curl -SL https://raw.githubusercontent.com/42on/ceph-collect/master/ceph-collect|python``
+```
+  tasks:
+    - name: "Waiting til cluster is healthy!!!"
+      ansible.builtin.setup:
+        filter: "facter_ceph"
+      delegate_to: "{{ cluster_health_host }}"
+      until:
+        - facter_ceph['status']['health']['status'] == 'HEALTH_OK'
+      retries: 100
+      delay: 10
+```
 
-It will not save the tool on disk, it just runs the Python code and saves the output in */tmp*.
+## check that there are more than one ceph-manager
+```
+    - name: "Fail, if there is only one ceph-manager!"
+      fail:
+        msg: "There must be at least 2 Managers!"
+      when:
+        - lookup('ansible.builtin.env', 'FAILOVERRIDE') | default("") | length  == 0 
+        - facter_ceph['mgr_metadata'] | length < 2
+```
 
-## Output
-After the tool finishes a tarball will be placed in */tmp* containing all the information.
+## Fail the active ceph manager when working on it
+```
+    - name: "Failover to another Ceph-Mgr if we want to reboot the active one"
+      shell: "ceph mgr fail {{ item.name }}"
+      when:
+        - facter_ceph['mgr_stat']['active_name']  == item.name
+      loop: "{{ facter_ceph['mgr_metadata'] | selectattr('container_hostname', 'equalto', inventory_hostname_short) }}"
 
-This tarball should be just a few kilobytes in size.
-
-For example: */tmp/ceph-collect_20160729_150304.tar.gz*
-
-Send this tarball to [info@42on.com](mailto:info@42on.com) for analyses.
+```
 
 # License
-This tool was written by [42on](http://www.42on.com/) to help Ceph customers quickly.
+This tool is based on [https://github.com/42on/ceph-collect] by [42on](http://www.42on.com/) to help Ceph customers quickly.
 
 The tool is free to use for all other purposes. It's licensed GPLv2, so please send changes back to us!
